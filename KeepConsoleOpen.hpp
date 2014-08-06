@@ -1,5 +1,5 @@
-#ifndef KEEPCONSOLEOPEN_HPP
-#define KEEPCONSOLEOPEN_HPP
+#ifndef INC_KEEPCONSOLEOPEN_HPP
+#define INC_KEEPCONSOLEOPEN_HPP
 
 #include <iostream>
 #include <SFML\Window\Keyboard.hpp>
@@ -47,4 +47,4 @@ private:
 	bool m_allowToClose = false;
 };
 
-#endif // KEEPCONSOLEOPEN_HPP
+#endif // INC_KEEPCONSOLEOPEN_HPP

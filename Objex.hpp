@@ -1,5 +1,5 @@
-#ifndef OBJEX_HPP
-#define OBJEX_HPP
+#ifndef INC_OBJEX_HPP
+#define INC_OBJEX_HPP
 
 /**********************************
 **                               **
@@ -163,4 +163,4 @@ private:
 	void createColorArray();
 };
 
-#endif // objex_hpp
+#endif // INC_OBJEX_HPP
