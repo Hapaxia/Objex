@@ -16,7 +16,7 @@ void Objex::refreshData()
 	mVertexArray.resize(0);
 	mNormalArray.resize(0);
 	mTextureArray.resize(0);
-	for (auto face : mFaces)
+	for (const auto& face : mFaces)
 	{
 		transferFaceToArray(face.vertexIndices, mVertices, mVertexArray);
 		transferFaceToArray(face.normalIndices, mNormals, mNormalArray, Vertex{ 0, 0, 1 });
@@ -36,28 +36,27 @@ bool Objex::loadFromFile(const std::string& filename)
 	if (!file.is_open())
 		return false;
 
-	mRawImportLines.resize(0);
 	struct stat filestatus;
 	stat(filename.c_str(), &filestatus);
 	std::string fileLine;
 	float previousProgress{ 0.f };
+
+	// cache file
+	std::vector<std::string> mRawImportLines; // all lines directly from the file (get deleted when parsed)
 	while (getline(file, fileLine))
 	{
-		// std::cout << fileLine << std::endl; // output file to console during load
+		mRawImportLines.push_back(fileLine);
 
 		// show percentage of progress. only updates if percentage has changed (whole numbers only)
 		float progress{ round(static_cast<float>(file.tellg()) * 100 / filestatus.st_size) };
 		if (progress != previousProgress)
 			std::clog << "Loading " << filename << " " << progress << "%" << std::endl;
 		previousProgress = progress;
-
-		mRawImportLines.push_back(fileLine);
 	}
 	file.close();
 
 	std::clog << "Importing .obj:" << std::endl;
-
-	if (!parse())
+	if (!parse(mRawImportLines))
 	{
 		std::cerr << "Importing failed!" << std::endl;
 		return false;
@@ -118,8 +117,6 @@ void Objex::scale(float scale)
 {
 	for (auto& vertex : mVertices)
 	{
-		//coord *= scale * (static_cast<float>(rand() % 10000) / 200000 + 0.9975f); // scale and then offset scale by a random amount (per coordinate - each vertex is different in each face)
-		//coord *= scale; // actual scale code
 		vertex.x *= scale;
 		vertex.y *= scale;
 		vertex.z *= scale;
@@ -240,36 +237,105 @@ std::string Objex::trimWhitespaceRight(std::string s)
 
 std::string Objex::trimWhitespace(const std::string& s)
 {
-	//s = trimWhitespaceLeft(trimWhitespaceRight(s));
 	return trimWhitespaceLeft(trimWhitespaceRight(s));
 }
 
-bool Objex::parse()
+unsigned int Objex::getTokens(const std::string& line, std::vector<std::string>& tokens)
 {
-	mFaceLines.resize(0);
-	mVertexLines.resize(0);
-	mNormalLines.resize(0);
-	mTextureLines.resize(0);
+	tokens.resize(0);
+	std::string token;
+	std::istringstream ss(line);
+	while (getline(ss, token, ' '))
+		tokens.push_back(token);
+	return tokens.size();
+}
+
+void Objex::addTokensToVertexVector(const std::vector<std::string>& tokens, std::vector<Vertex>& vertices)
+{
+	vertices.push_back({ std::stof(tokens[0]), std::stof(tokens[1]), std::stof(tokens[2]) });
+}
+
+bool Objex::parse(const std::vector<std::string>& lines)
+{
 	mUnprocessedLines.resize(0);
 	mCommentLines.resize(0);
 
 	std::clog << "parsing lines" << std::endl;
-	// separate lines
-	for (auto line : mRawImportLines)
+	// parse lines
+	const unsigned int numberOfLines = lines.size();
+	unsigned int currentLine{ 0 };
+	float previousProgress{ 0.f };
+	for (auto line : lines)
 	{
 		line = trimWhitespace(line);
 		if (line.length() > 1)
 		{
 			const std::string singleCharCommandParameters{ trimWhitespace(line.substr(1)) };
 			const std::string doubleCharCommandParameters{ trimWhitespace(line.substr(2)) };
+			std::vector<std::string> tokens;
 			if (line.substr(0, 2) == "v ")
-				mVertexLines.push_back(singleCharCommandParameters);
-			else if (line.substr(0, 2) == "f ")
-				mFaceLines.push_back(singleCharCommandParameters);
+			{
+				if (getTokens(singleCharCommandParameters, tokens) == 3)
+					addTokensToVertexVector(tokens, mVertices);
+			}
 			else if (line.substr(0, 3) == "vn ")
-				mNormalLines.push_back(doubleCharCommandParameters);
+			{
+				if (getTokens(doubleCharCommandParameters, tokens) == 3)
+					addTokensToVertexVector(tokens, mNormals);
+			}
 			else if (line.substr(0, 3) == "vt ")
-				mTextureLines.push_back(doubleCharCommandParameters);
+			{
+				getTokens(doubleCharCommandParameters, tokens);
+				if ((tokens.size() >= 1) && (tokens.size() <= 3))
+				{
+					tokens.resize(3, "0");
+					addTokensToVertexVector(tokens, mTextures);
+				}
+			}
+			else if (line.substr(0, 2) == "f ")
+			{
+				Objex::Face face;
+				std::istringstream ss(line);
+				std::vector<std::string> tokens;
+				getTokens(singleCharCommandParameters, tokens);
+				if ((tokens.size() >= 3) && (tokens.size() <= 4))
+				{
+					for (auto t : tokens)
+					{
+						std::string index;
+						std::vector<std::string> indices;
+						std::istringstream ts(t);
+						while (getline(ts, index, '/')) // split token into 3 values using slash as delimiter. when the index is not present, an empty one may need to be created when stored (when importer is expanded to include other index types)
+							indices.push_back(index);
+						if (indices.size() >= 1) // first index in the token is the vertex index
+						{
+							face.vertexIndices.push_back({ std::stoi(indices[0]) - 1 }); // "- 1" is to convert index from one-based index (in the file) to zero-based index (in an array/vector)
+							if (indices.size() >= 2) // texture vertex index is present (second index)
+							{
+								face.textureIndices.push_back({ std::stoi(indices[2]) - 1 });
+								if (indices.size() >= 3) // vertex normal index is present (third index)
+									face.normalIndices.push_back({ std::stoi(indices[2]) - 1 });
+							}
+						}
+					}
+					if (face.normalIndices.size() != face.vertexIndices.size()) // if normals are not provided for each vertex, set them to the default normal (index of -1)
+					{
+						// normal index of -1 becomes default normal of (0.0, 0.0, 1.0)
+						face.normalIndices.resize(face.vertexIndices.size());
+						for (auto& normalIndex : face.normalIndices)
+							normalIndex = -1;
+					}
+					if (face.textureIndices.size() != face.vertexIndices.size()) // if texture vertices are not provided for each vertex, set them to the default vertex (index of -1)
+					{
+						// texture vertex index of -1 becomes default texture index of (0.0, 0.0, 0.0)
+						face.textureIndices.resize(face.vertexIndices.size());
+						for (auto& textureIndex : face.textureIndices)
+							textureIndex = -1;
+					}
+				}
+				mFaces.push_back(face);
+
+			}
 			else if (line.front() == '#')
 				mCommentLines.push_back(singleCharCommandParameters);
 			else
@@ -279,115 +345,18 @@ bool Objex::parse()
 			mCommentLines.push_back("");
 		else
 			mUnprocessedLines.push_back(line);
-	}
-	mRawImportLines.resize(0);
 
-	std::clog << "extracting vertex data" << std::endl;
-	// extract vertex data from lines
-	for (auto line : mVertexLines)
-	{
-		std::istringstream ss(line);
-		std::vector<std::string> tokens;
-		std::string token;
-		while (getline(ss, token, ' '))
-			tokens.push_back(token);
-		if (tokens.size() == 3)
-			mVertices.push_back({ std::stof(tokens[0]), std::stof(tokens[1]), std::stof(tokens[2]) });
-	}
-	mVertexLines.resize(0);
-
-	std::clog << "extracting vertex normal data" << std::endl;
-	// extract vertex normal data from lines
-	for (auto line : mNormalLines)
-	{
-		std::istringstream ss(line);
-		std::vector<std::string> tokens;
-		std::string token;
-		while (getline(ss, token, ' '))
-			tokens.push_back(token);
-		if (tokens.size() == 3)
-			mNormals.push_back({ std::stof(tokens[0]), std::stof(tokens[1]), std::stof(tokens[2]) });
-	}
-	mNormalLines.resize(0);
-
-	std::clog << "extracting texture vertex data" << std::endl;
-	// extract texture vertex data from lines
-	for (auto line : mTextureLines)
-	{
-		std::istringstream ss(line);
-		std::vector<std::string> tokens;
-		std::string token;
-		while (getline(ss, token, ' '))
-			tokens.push_back(token);
-		if ((tokens.size() >= 1) && (tokens.size() <= 3))
-		{
-			tokens.resize(3, "0");
-			/*
-			while (tokens.size() < 3)
-			tokens.push_back("0");
-			*/
-			mTextures.push_back({ std::stof(tokens[0]), std::stof(tokens[1]), std::stof(tokens[2]) });
-		}
-	}
-	mTextureLines.resize(0);
-
-	// extract indices from face lines
-	const unsigned int numberOfFaces = mFaceLines.size();
-	unsigned int currentFace{ 0 };
-	float previousProgress{ 0.f };
-	for (auto line : mFaceLines)
-	{
 		// show percentage of progress. only updates if percentage has changed (whole numbers only)
-		float progress{ round(static_cast<float>(currentFace)* 100 / numberOfFaces) };
+		float progress{ round(static_cast<float>(currentLine)* 100 / numberOfLines) };
 		if (progress != previousProgress)
-			std::clog << "Building model " << progress << "%" << std::endl;
+			std::clog << "Parsing " << progress << "%" << std::endl;
 		previousProgress = progress;
-		++currentFace;
-
-		Objex::Face face;
-		std::istringstream ss(line);
-		std::vector<std::string> tokens;
-		std::string token;
-		while (getline(ss, token, ' '))
-			tokens.push_back(token);
-		if ((tokens.size() >= 3) && (tokens.size() <= 4))
-		{
-			for (auto t : tokens)
-			{
-				std::string index;
-				std::vector<std::string> indices;
-				std::istringstream ts(t);
-				while (getline(ts, index, '/')) // split token into 3 values using slash as delimiter. when the index is not present, an empty one may need to be created when stored (when importer is expanded to include other index types)
-					indices.push_back(index);
-				if (indices.size() >= 1) // first index in the token is the vertex index
-				{
-					face.vertexIndices.push_back({ std::stoi(indices[0]) - 1 }); // "- 1" is to convert index from one-based index (in the file) to zero-based index (in an array/vector)
-					if (indices.size() >= 2) // texture vertex index is present (second index)
-					{
-						face.textureIndices.push_back({ std::stoi(indices[2]) - 1 });
-						if (indices.size() >= 3) // vertex normal index is present (third index)
-							face.normalIndices.push_back({ std::stoi(indices[2]) - 1 });
-					}
-				}
-			}
-			if (face.normalIndices.size() != face.vertexIndices.size()) // if normals are not provided for each vertex, set them to the default normal (index of -1)
-			{
-				// normal index of -1 becomes default normal of (0.0, 0.0, 1.0)
-				face.normalIndices.resize(face.vertexIndices.size());
-				for (auto& normalIndex : face.normalIndices)
-					normalIndex = -1;
-			}
-			if (face.textureIndices.size() != face.vertexIndices.size()) // if texture vertices are not provided for each vertex, set them to the default vertex (index of -1)
-			{
-				// texture vertex index of -1 becomes default texture index of (0.0, 0.0, 0.0)
-				face.textureIndices.resize(face.vertexIndices.size());
-				for (auto& textureIndex : face.textureIndices)
-					textureIndex = -1;
-			}
-		}
-		mFaces.push_back(face);
+		++currentLine;
 	}
-	mFaceLines.resize(0);
+
+	std::clog << "Lines in file: " << lines.size() << std::endl;
+	std::clog << "Comment lines: " << mCommentLines.size() << std::endl;
+	std::clog << "Unprocessed lines: " << mUnprocessedLines.size() << std::endl;
 
 	// generate container to store all data in order required by OpenGL
 	refreshData();
@@ -444,8 +413,7 @@ void Objex::createColorArray()
 		// create random colour per triangle
 		for (unsigned int triangle{ 0 }; triangle < (mVertexArray.size() / 9); ++triangle)
 		{
-			//const float luminosity{ static_cast<float>(rand() % 500) / 1000 + 0.5f };
-			//const Vertex random{ static_cast<float>(rand() % 500) / 1000 + 0.25f, 0.f, 0.f };
+			//const float luminosity{ static_cast<float>(rand() % 500) / 1000 + 0.5f }; // use for random greys
 			const Vertex random{ static_cast<float>(rand() % 500) / 1000 + 0.25f, static_cast<float>(rand() % 500) / 1000 + 0.25f, static_cast<float>(rand() % 500) / 1000 + 0.25f };
 			for (unsigned int vertex{ 0 }; vertex < 3; ++vertex)
 			{
@@ -480,15 +448,6 @@ void Objex::createColorArray()
 			mColorArray.push_back(1); // alpha
 		}
 	}
-	/*
-	for (auto coord : vertexArray)
-	{
-	// create random colour per vertex
-	for (unsigned int colorElement = 0; colorElement < 3; ++colorElement)
-	colorArray.push_back(static_cast<float>(rand() % 1000) / 1000);
-	colorArray.push_back(1); // alpha
-	}
-	*/
 	colorData = &mColorArray.front();
 }
 

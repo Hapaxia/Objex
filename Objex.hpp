@@ -43,11 +43,10 @@ DOES NOT IMPORT:
 
 
 NOTES:
- - does not support relative vertex indexing e.g. "f -4 -3 -2 -1"
+ - does not (currently) support relative vertex indexing e.g. "f -4 -3 -2 -1"
  - manipulation of data requires recreation of the entire object and is therefore very slow and not intended for use with animation
  - outputs using "clog" (for information) and "cerr" (for errors)
  - there are a number of possible errors that can occur if used incorrectly and they are not prepared for
- - importing could be faster if parsing was done in less passes
  - the colour creation is not strictly required and may be removed or bypassed
 
 
@@ -144,21 +143,18 @@ private:
 
 	Box mLocalBoundingBox;
 
-	std::vector<std::string> mRawImportLines; // all lines directly from the file (get deleted when parsed)
-	std::vector<std::string> mVertexLines;
-	std::vector<std::string> mNormalLines;
-	std::vector<std::string> mTextureLines;
-	std::vector<std::string> mFaceLines;
 	std::vector<std::string> mCommentLines;
 	std::vector<std::string> mUnprocessedLines;
 
 	std::string trimWhitespaceLeft(std::string string);
 	std::string trimWhitespaceRight(std::string string);
 	std::string trimWhitespace(const std::string& string);
+	unsigned int getTokens(const std::string& line, std::vector<std::string>& tokens);
+	void addTokensToVertexVector(const std::vector<std::string>& tokens, std::vector<Vertex>& vertices);
 
 	void transferFaceToArray(const std::vector<int>& indices, const std::vector<Vertex>& vertices, std::vector<GLfloat>& destinationArray, const Vertex& defaultVertex = { 0.f, 0.f, 0.f });
 	void refreshLocalBoundingBox();
-	bool parse();
+	bool parse(const std::vector<std::string>& lines);
 
 	void createColorArray();
 };

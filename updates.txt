@@ -1,0 +1,5 @@
+v0.1.4
+Removed multiple parsing passes. Now, file is cached and then parsed in one pass.
+
+v0.1.3
+First working version added to GitHub (github.com/hapaxia)
