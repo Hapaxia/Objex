@@ -1,3 +1,6 @@
+v0.1.5
+added more "gets" for more information about the local bounding box (i.e. sizes and the centre)
+
 v0.1.4
 Removed multiple parsing passes. Now, file is cached and then parsed in one pass.
 

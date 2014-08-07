@@ -87,7 +87,7 @@ public:
 	};
 	struct Box
 	{
-		float left{ 0.f }, right{ 0.f }, top{ 0.f }, bottom{ 0.f }, front{ 0.f }, back{ 0.f };
+		float left{ 0.f }, right{ 0.f }, top{ 0.f }, bottom{ 0.f }, front{ 0.f }, back{ 0.f }, width{ 0.f }, height{ 0.f }, depth{ 0.f };
 	};
 
 	Objex();
@@ -112,6 +112,7 @@ public:
 	std::vector<Vertex> getAllTextureVertices();
 	std::vector<Face> getAllFaces();
 
+	Vertex getLocalBoundingBoxCenter();
 	Box getLocalBoundingBox();
 	float getLocalBoundingBoxLeft();
 	float getLocalBoundingBoxRight();
@@ -119,6 +120,9 @@ public:
 	float getLocalBoundingBoxBottom();
 	float getLocalBoundingBoxFront();
 	float getLocalBoundingBoxBack();
+	float getLocalBoundingBoxWidth();
+	float getLocalBoundingBoxHeight();
+	float getLocalBoundingBoxDepth();
 
 	unsigned int getNumberOfVertices();
 	unsigned int getNumberOfTriangles();

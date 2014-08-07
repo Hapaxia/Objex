@@ -64,7 +64,12 @@ int main()
 
 	textString = "Local bounding box:\nx: [" + std::to_string(objex.getLocalBoundingBoxLeft()) + " , " + std::to_string(objex.getLocalBoundingBoxRight()) + "]\n" +
 		"y: [" + std::to_string(objex.getLocalBoundingBoxBottom()) + " , " + std::to_string(objex.getLocalBoundingBoxTop()) + "]\n" +
-		"z: [" + std::to_string(objex.getLocalBoundingBoxBack()) + " , " + std::to_string(objex.getLocalBoundingBoxFront()) + "]";
+		"z: [" + std::to_string(objex.getLocalBoundingBoxBack()) + " , " + std::to_string(objex.getLocalBoundingBoxFront()) + "]\n" +
+		"Local bounding box sizes:\nwidth: " + std::to_string(objex.getLocalBoundingBoxWidth()) + "\n" +
+		"height: " + std::to_string(objex.getLocalBoundingBoxHeight()) + "\n" +
+		"depth: " + std::to_string(objex.getLocalBoundingBoxDepth()) + "\n" +
+		"Local bounding box centre: (" + std::to_string(objex.getLocalBoundingBoxCenter().x) + ", " + std::to_string(objex.getLocalBoundingBoxCenter().y) + ", " + std::to_string(objex.getLocalBoundingBoxCenter().z) + ")"
+		;
 
 	text.setString(textString);
 

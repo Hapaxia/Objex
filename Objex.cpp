@@ -68,6 +68,11 @@ bool Objex::loadFromFile(const std::string& filename)
 	}
 }
 
+Objex::Vertex Objex::getLocalBoundingBoxCenter()
+{
+	return{ mLocalBoundingBox.width / 2 + mLocalBoundingBox.left, mLocalBoundingBox.height / 2 + mLocalBoundingBox.bottom, mLocalBoundingBox.depth / 2 + mLocalBoundingBox.back };
+}
+
 Objex::Box Objex::getLocalBoundingBox()
 {
 	return mLocalBoundingBox;
@@ -101,6 +106,21 @@ float Objex::getLocalBoundingBoxFront()
 float Objex::getLocalBoundingBoxBack()
 {
 	return mLocalBoundingBox.back;
+}
+
+float Objex::getLocalBoundingBoxWidth()
+{
+	return mLocalBoundingBox.width;
+}
+
+float Objex::getLocalBoundingBoxHeight()
+{
+	return mLocalBoundingBox.height;
+}
+
+float Objex::getLocalBoundingBoxDepth()
+{
+	return mLocalBoundingBox.depth;
 }
 
 unsigned int Objex::getNumberOfVertices()
@@ -474,4 +494,7 @@ void Objex::refreshLocalBoundingBox()
 		if (vertex.z < mLocalBoundingBox.back)
 			mLocalBoundingBox.back = vertex.z;
 	}
+	mLocalBoundingBox.width = mLocalBoundingBox.right - mLocalBoundingBox.left;
+	mLocalBoundingBox.height = mLocalBoundingBox.top - mLocalBoundingBox.bottom;
+	mLocalBoundingBox.depth = mLocalBoundingBox.front - mLocalBoundingBox.back;
 }
