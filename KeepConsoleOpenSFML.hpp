@@ -1,39 +1,36 @@
-#ifndef INC_KEEPCONSOLEOPEN_HPP
-#define INC_KEEPCONSOLEOPEN_HPP
+#ifndef DEV_KEEPCONSOLEOPENSFML_HPP
+#define DEV_KEEPCONSOLEOPENSFML_HPP
+
+// http:://github.com/hapaxia
 
 #include <iostream>
 #include <SFML\Window\Keyboard.hpp>
 
-class KeepConsoleOpen
+namespace DEV
+{
+
+//#define ENTER_KEY_TO_CLOSE_CONSOLE
+class KeepConsoleOpenSFML
 {
 public:
-	~KeepConsoleOpen()
+	~KeepConsoleOpenSFML()
 	{
 		if (!m_allowToClose)
 		{
 			// make sure that a key isn't still being pressed
-			while (sf::Keyboard::isKeyPressed(sf::Keyboard::Return))
+			while (isAnyKeyPressed())
 			{ }
 
-			//#define ENTER_KEY_TO_CLOSE_CONSOLE
 #ifdef ENTER_KEY_TO_CLOSE_CONSOLE
 			// enter to close
 			std::cout << std::endl << "Press Enter to close the console." << std::endl;
 			while (!sf::Keyboard::isKeyPressed(sf::Keyboard::Return))
-			{
-			}
+			{ }
 #else
 			// any key to close
 			std::cout << std::endl << "Press any key to close the console." << std::endl;
-			bool anyKeyPressed = false;
-			while (!anyKeyPressed)
-			{
-				for (int k = -1; k < sf::Keyboard::KeyCount; k++)
-				{
-					if (sf::Keyboard::isKeyPressed(static_cast<sf::Keyboard::Key>(k)))
-						anyKeyPressed = true;
-				}
-			}
+			while (!isAnyKeyPressed())
+			{ }
 #endif // ENTER_KEY_TO_CLOSE_CONSOLE
 		}
 	}
@@ -45,6 +42,18 @@ public:
 
 private:
 	bool m_allowToClose = false;
+
+	bool isAnyKeyPressed()
+	{
+		for (int k = -1; k < sf::Keyboard::KeyCount; ++k)
+		{
+			if (sf::Keyboard::isKeyPressed(static_cast<sf::Keyboard::Key>(k)))
+				return true;
+		}
+		return false;
+	}
 };
 
-#endif // INC_KEEPCONSOLEOPEN_HPP
+} // namespace DEV
+
+#endif // DEV_KEEPCONSOLEOPENSFML_HPP

@@ -1,15 +1,8 @@
 #include "Objex.hpp"
 
-
 Objex::Objex()
 {
 }
-
-
-Objex::~Objex()
-{
-}
-
 
 void Objex::refreshData()
 {
@@ -47,9 +40,9 @@ bool Objex::loadFromFile(const std::string& filename)
 	{
 		mRawImportLines.push_back(fileLine);
 
-		// show percentage of progress. only updates if percentage has changed (whole numbers only)
+		// show percentage of progress. only updates if percentage has increased (whole numbers only)
 		float progress{ round(static_cast<float>(file.tellg()) * 100 / filestatus.st_size) };
-		if (progress != previousProgress)
+		if (progress > previousProgress)
 			std::clog << "Loading " << filename << " " << progress << "%" << std::endl;
 		previousProgress = progress;
 	}
@@ -76,51 +69,6 @@ Objex::Vertex Objex::getLocalBoundingBoxCenter()
 Objex::Box Objex::getLocalBoundingBox()
 {
 	return mLocalBoundingBox;
-}
-
-float Objex::getLocalBoundingBoxLeft()
-{
-	return mLocalBoundingBox.left;
-}
-
-float Objex::getLocalBoundingBoxRight()
-{
-	return mLocalBoundingBox.right;
-}
-
-float Objex::getLocalBoundingBoxTop()
-{
-	return mLocalBoundingBox.top;
-}
-
-float Objex::getLocalBoundingBoxBottom()
-{
-	return mLocalBoundingBox.bottom;
-}
-
-float Objex::getLocalBoundingBoxFront()
-{
-	return mLocalBoundingBox.front;
-}
-
-float Objex::getLocalBoundingBoxBack()
-{
-	return mLocalBoundingBox.back;
-}
-
-float Objex::getLocalBoundingBoxWidth()
-{
-	return mLocalBoundingBox.width;
-}
-
-float Objex::getLocalBoundingBoxHeight()
-{
-	return mLocalBoundingBox.height;
-}
-
-float Objex::getLocalBoundingBoxDepth()
-{
-	return mLocalBoundingBox.depth;
 }
 
 unsigned int Objex::getNumberOfVertices()
@@ -329,12 +277,26 @@ bool Objex::parse(const std::vector<std::string>& lines)
 							indices.push_back(index);
 						if (indices.size() >= 1) // first index in the token is the vertex index
 						{
-							face.vertexIndices.push_back({ std::stoi(indices[0]) - 1 }); // "- 1" is to convert index from one-based index (in the file) to zero-based index (in an array/vector)
+							int indexValue{ std::stoi(indices[0]) - 1 };
+							if (indexValue < 0)
+								face.vertexIndices.push_back(mVertices.size() + indexValue); // vertex index from offset (relative positioning)
+							else
+								face.vertexIndices.push_back(indexValue); // "- 1" is to convert index from one-based index (in the file) to zero-based index (in an array/vector)
 							if (indices.size() >= 2) // texture vertex index is present (second index)
 							{
-								face.textureIndices.push_back({ std::stoi(indices[2]) - 1 });
+								indexValue = std::stoi(indices[1]) - 1;
+								if (indexValue < 0)
+									face.vertexIndices.push_back(mVertices.size() + indexValue); // vertex index from offset (relative positioning)
+								else
+									face.textureIndices.push_back(indexValue);
 								if (indices.size() >= 3) // vertex normal index is present (third index)
-									face.normalIndices.push_back({ std::stoi(indices[2]) - 1 });
+								{
+									indexValue = std::stoi(indices[2]) - 1;
+									if (indexValue < 0)
+										face.vertexIndices.push_back(mVertices.size() + indexValue); // vertex index from offset (relative positioning)
+									else
+										face.normalIndices.push_back(indexValue);
+								}
 							}
 						}
 					}

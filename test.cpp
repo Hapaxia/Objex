@@ -3,12 +3,12 @@
 
 #include "Objex.hpp"
 
-#include "KeepConsoleOpen.hpp"
-#include <iostream> // for errors
+#include "KeepConsoleOpenSFML.hpp"
+#include <iostream> // for errors/log
 
 int main()
 {
-	KeepConsoleOpen keepConsoleOpen;
+	DEV::KeepConsoleOpenSFML keepConsoleOpen;
 
 	Objex objex;
 	if (!objex.loadFromFile("cow-nonormals.obj")) // .OBJ file
@@ -62,12 +62,12 @@ int main()
 		}
 	}
 
-	textString = "Local bounding box:\nx: [" + std::to_string(objex.getLocalBoundingBoxLeft()) + " , " + std::to_string(objex.getLocalBoundingBoxRight()) + "]\n" +
-		"y: [" + std::to_string(objex.getLocalBoundingBoxBottom()) + " , " + std::to_string(objex.getLocalBoundingBoxTop()) + "]\n" +
-		"z: [" + std::to_string(objex.getLocalBoundingBoxBack()) + " , " + std::to_string(objex.getLocalBoundingBoxFront()) + "]\n" +
-		"Local bounding box sizes:\nwidth: " + std::to_string(objex.getLocalBoundingBoxWidth()) + "\n" +
-		"height: " + std::to_string(objex.getLocalBoundingBoxHeight()) + "\n" +
-		"depth: " + std::to_string(objex.getLocalBoundingBoxDepth()) + "\n" +
+	textString = "Local bounding box:\nx: [" + std::to_string(objex.getLocalBoundingBox().left) + " , " + std::to_string(objex.getLocalBoundingBox().right) + "]\n" +
+		"y: [" + std::to_string(objex.getLocalBoundingBox().bottom) + " , " + std::to_string(objex.getLocalBoundingBox().top) + "]\n" +
+		"z: [" + std::to_string(objex.getLocalBoundingBox().back) + " , " + std::to_string(objex.getLocalBoundingBox().front) + "]\n" +
+		"Local bounding box sizes:\nwidth: " + std::to_string(objex.getLocalBoundingBox().width) + "\n" +
+		"height: " + std::to_string(objex.getLocalBoundingBox().height) + "\n" +
+		"depth: " + std::to_string(objex.getLocalBoundingBox().depth) + "\n" +
 		"Local bounding box centre: (" + std::to_string(objex.getLocalBoundingBoxCenter().x) + ", " + std::to_string(objex.getLocalBoundingBoxCenter().y) + ", " + std::to_string(objex.getLocalBoundingBoxCenter().z) + ")"
 		;
 

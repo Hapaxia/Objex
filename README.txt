@@ -3,7 +3,7 @@ Objex
 
 OpenGL OBJ class
 
-by Hapax
+by Hapax (http://github.com/hapaxia)
 2014 Golden Eagle Software
 
 Imports .OBJ files and generates vertex arrays for OpenGL.

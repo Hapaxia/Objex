@@ -1,8 +1,15 @@
+v0.2.0
+Fixed bug where texture vertex indices where incorrect.
+Added ability to import using relative vertices indices.
+Removed redundant bounding box methods (e.g. getLocalBoundingBoxLeft() is not needed as getLocalBoundingBox().left does the same thing).
+Included latest version of KeepConsoleOpen.
+Updated test.cpp to match alterations.
+
 v0.1.5
-added more "gets" for more information about the local bounding box (i.e. sizes and the centre)
+Added more "gets" for more information about the local bounding box (i.e. sizes and the centre).
 
 v0.1.4
 Removed multiple parsing passes. Now, file is cached and then parsed in one pass.
 
 v0.1.3
-First working version added to GitHub (github.com/hapaxia)
+First working version added to GitHub (http:://github.com/hapaxia).

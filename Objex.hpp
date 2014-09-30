@@ -4,10 +4,10 @@
 /**********************************
 **                               **
 **             OBJEX             **
-**             v0.1              **
+**             v0.2              **
 **                               **
 ** by Hapax                      **
-** github.com/hapaxia            **
+** (http:://github.com/hapaxia)  **
 **                               **
 **  2014 Golden Eagle Software   **
 **                               **
@@ -43,7 +43,7 @@ DOES NOT IMPORT:
 
 
 NOTES:
- - does not (currently) support relative vertex indexing e.g. "f -4 -3 -2 -1"
+ - now also supports relative vertex indexing e.g. "f -4 -3 -2 -1"
  - manipulation of data requires recreation of the entire object and is therefore very slow and not intended for use with animation
  - outputs using "clog" (for information) and "cerr" (for errors)
  - there are a number of possible errors that can occur if used incorrectly and they are not prepared for
@@ -66,7 +66,7 @@ NOTES:
 
 #include <iostream>
 
-
+// Objex (v0.2)
 class Objex
 {
 public:
@@ -91,7 +91,6 @@ public:
 	};
 
 	Objex();
-	~Objex();
 
 	void refreshData();
 	bool loadFromFile(const std::string& filename);
@@ -114,15 +113,6 @@ public:
 
 	Vertex getLocalBoundingBoxCenter();
 	Box getLocalBoundingBox();
-	float getLocalBoundingBoxLeft();
-	float getLocalBoundingBoxRight();
-	float getLocalBoundingBoxTop();
-	float getLocalBoundingBoxBottom();
-	float getLocalBoundingBoxFront();
-	float getLocalBoundingBoxBack();
-	float getLocalBoundingBoxWidth();
-	float getLocalBoundingBoxHeight();
-	float getLocalBoundingBoxDepth();
 
 	unsigned int getNumberOfVertices();
 	unsigned int getNumberOfTriangles();
